@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type Medicine = {
   id: number;
   name: string;
@@ -11,7 +13,10 @@ type MedicineCardProps = {
 
 export default function MedicineCard({ medicine }: MedicineCardProps) {
   return (
-    <div className="mb-3 rounded-xl border bg-white p-5 text-left shadow-sm">
+    <Link
+      href={`/medicaments/${medicine.id}`}
+      className="mb-3 block rounded-xl border bg-white p-5 text-left shadow-sm transition hover:shadow-md"
+    >
       <h3 className="text-lg font-semibold text-slate-900">
         {medicine.name}
       </h3>
@@ -23,6 +28,6 @@ export default function MedicineCard({ medicine }: MedicineCardProps) {
       <p className="mt-2 text-sm font-medium text-green-600">
         {medicine.dosage}
       </p>
-    </div>
+    </Link>
   );
 }
