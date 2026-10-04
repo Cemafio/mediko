@@ -5,7 +5,7 @@ export default function Home() {
     <main className="min-h-screen bg-slate-50">
 
       {/* Hero */}
-      <section className="mx-auto flex max-w-5xl flex-col items-center px-6 py-24 text-center">
+      <section className="mx-auto flex max-w-5xl flex-col items-center px-6 py-24 text-center align-center justify-center">
         <p className="mb-4 font-medium text-green-600">
           Votre recherche de médicaments simplifiée
         </p>
