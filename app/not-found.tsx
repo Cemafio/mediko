@@ -7,11 +7,11 @@ export default function NotFound() {
         </h1>
 
         <p className="mt-4 text-xl text-slate-600">
-          Médicament introuvable
+          Médicament ou pharmacie introuvable
         </p>
 
         <p className="mt-2 text-slate-500">
-          Le médicament que vous recherchez n'existe pas.
+          Le médicament ou la pharmacie que vous recherchez n'existe pas.
         </p>
       </div>
     </main>
