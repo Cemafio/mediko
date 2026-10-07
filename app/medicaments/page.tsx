@@ -1,5 +1,7 @@
 import { medicines } from "@/data/medicine";
 import MedicineCard from "@/components/MedicineCard";
+import { getMedicines } from "@/lib/service";
+import { log } from "node:console";
 
 type MedicinesPageProps = {
   searchParams: Promise<{
@@ -11,12 +13,15 @@ export default async function MedicinesPage({
   searchParams,
 }: MedicinesPageProps) {
   const { search } = await searchParams;
+  const medocs = await getMedicines();
 
   const filteredMedicines = search
-    ? medicines.filter((medicine) =>
+    ? medocs.filter((medicine: any) =>
         medicine.name.toLowerCase().includes(search.toLowerCase())
       )
-    : medicines;
+    : medocs;
+
+  console.log("Liste des medicament dans back:", filteredMedicines);
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12">
@@ -41,7 +46,7 @@ export default async function MedicinesPage({
           </p>
         ) : (
           <div className="mt-8 grid gap-4 md:grid-cols-2">
-            {filteredMedicines.map((medicine) => (
+            {filteredMedicines.map((medicine:any) => (
               <MedicineCard
                 key={medicine.id}
                 medicine={medicine}
