@@ -29,6 +29,12 @@ export default function Navbar() {
           >
             Pharmacies
           </Link>
+          <Link
+            href="/dashboard"
+            className="text-sm text-slate-600 hover:text-green-600"
+          >
+            Dashboard
+          </Link>
 
           <div className="ml-2 flex items-center gap-3 border-l pl-6">
             <Link

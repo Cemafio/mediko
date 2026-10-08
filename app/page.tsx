@@ -175,7 +175,7 @@ export default function Home() {
                         <p className="mx-auto mt-3 max-w-xl text-green-50">
                             Consultez les horaires, les coordonnées et les
                             médicaments disponibles dans chaque pharmacie.
-                        </p>
+                        </p>  
 
                         <Link
                             href="/pharmacies"
