@@ -53,35 +53,35 @@ function toMinutes(time: string) {
     return h * 60 + m;
 }
 
-function getOpenStatus(openingHours: OpeningHours[]) {
-    const { day, minutes } = getNow();
-    const todayHours = openingHours.find((h) => h.day === day);
+// function getOpenStatus(openingHours: OpeningHours[]) {
+//     const { day, minutes } = getNow();
+//     const todayHours = openingHours.find((h) => h.day === day);
 
-    if (!todayHours || todayHours.open === "Fermé") {
-        return { today: day, isOpen: false, closesAt: null as string | null };
-    }
+//     if (!todayHours || todayHours.open === "Fermé") {
+//         return { today: day, isOpen: false, closesAt: null as string | null };
+//     }
 
-    const start = toMinutes(todayHours.open);
-    const end = toMinutes(todayHours.close);
+//     const start = toMinutes(todayHours.open);
+//     const end = toMinutes(todayHours.close);
 
-    // Gère aussi les horaires qui passent minuit (ex. 20:00 - 02:00)
-    const isOpen =
-        end > start
-            ? minutes >= start && minutes < end
-            : minutes >= start || minutes < end;
+//     // Gère aussi les horaires qui passent minuit (ex. 20:00 - 02:00)
+//     const isOpen =
+//         end > start
+//             ? minutes >= start && minutes < end
+//             : minutes >= start || minutes < end;
 
-    return {
-        today: day,
-        isOpen,
-        closesAt: isOpen ? todayHours.close : null,
-    };
-}
+//     return {
+//         today: day,
+//         isOpen,
+//         closesAt: isOpen ? todayHours.close : null,
+//     };
+// }
 
 export async function generateMetadata({
     params,
 }: PharmacyPageProps): Promise<Metadata> {
     const { id } = await params;
-    const pharmacy = pharmacies.find((p) => p.id === Number(id));
+    const pharmacy = pharmacies.find((p:any) => p.id === id);
 
     if (!pharmacy) return { title: "Pharmacie introuvable | Mediko" };
 
@@ -93,19 +93,15 @@ export async function generateMetadata({
 
 export default async function PharmacyPage({ params }: PharmacyPageProps) {
     const { id } = await params;
-    const pharmacyId = Number(id);
 
-    const pharmacy = pharmacies.find((p) => p.id === pharmacyId);
+    const pharmacy = pharmacies.find((p:any) => p.id === id);
 
     if (!pharmacy) {
         notFound();
     }
 
-    const availableMedicines = medicines.filter((medicine) =>
-        medicine.pharmacyIds.includes(pharmacy.id)
-    );
 
-    const { today, isOpen, closesAt } = getOpenStatus(pharmacy.openingHours);
+    // const { today, isOpen, closesAt } = getOpenStatus(pharmacy.openingHours);
 
     const phoneHref = `tel:${pharmacy.phone.replace(/\s/g, "")}`;
     const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -115,12 +111,6 @@ export default async function PharmacyPage({ params }: PharmacyPageProps) {
     return (
         <main className="min-h-screen bg-slate-50 px-6 py-12">
             <div className="mx-auto max-w-3xl">
-                {/* <Link
-                    href="/pharmacies"
-                    className="mb-6 inline-flex items-center gap-1 text-sm text-slate-600 transition hover:text-green-600"
-                >
-                    <span aria-hidden="true">←</span> Page précédente
-                </Link> */}
                 <BackButton fallbackHref="/pharmacies" />
 
                 <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
@@ -139,7 +129,7 @@ export default async function PharmacyPage({ params }: PharmacyPageProps) {
                                     {pharmacy.name}
                                 </h1>
 
-                                <span
+                                {/* <span
                                     className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
                                         isOpen
                                             ? "bg-green-100 text-green-700"
@@ -154,7 +144,7 @@ export default async function PharmacyPage({ params }: PharmacyPageProps) {
                                     {isOpen
                                         ? `Ouvert · ferme à ${closesAt}`
                                         : "Fermé actuellement"}
-                                </span>
+                                </span> */}
                             </div>
                         </div>
                     </div>
@@ -220,12 +210,12 @@ export default async function PharmacyPage({ params }: PharmacyPageProps) {
 
                         {/* Horaires */}
                         <div>
-                            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                            {/* <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                                 Horaires d&apos;ouverture
-                            </h2>
+                            </h2> */}
 
-                            <div className="mt-4 divide-y overflow-hidden rounded-xl border">
-                                {pharmacy.openingHours.map((hours) => {
+                            {/* <div className="mt-4 divide-y overflow-hidden rounded-xl border"> */}
+                                {/* {pharmacy.openingHours.map((hours) => {
                                     const isToday = hours.day === today;
                                     const closed = hours.open === "Fermé";
 
@@ -254,14 +244,14 @@ export default async function PharmacyPage({ params }: PharmacyPageProps) {
                                             </span>
                                         </div>
                                     );
-                                })}
-                            </div>
+                                })} */}
+                            {/* </div> */}
                         </div>
                     </div>
                 </div>
 
                 {/* Médicaments */}
-                <section className="mt-10">
+                {/* <section className="mt-10">
                     <div className="flex items-baseline justify-between">
                         <h2 className="text-xl font-semibold text-slate-900">
                             Médicaments disponibles
@@ -284,7 +274,7 @@ export default async function PharmacyPage({ params }: PharmacyPageProps) {
                             ))}
                         </div>
                     )}
-                </section>
+                </section> */}
             </div>
         </main>
     );

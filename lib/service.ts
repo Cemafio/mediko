@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000";
+const API_URL = "http://localhost:3005";
 // Fetch medicines from the backend
 export async function getMedicines() {
   const response = await fetch(`${API_URL}/medicine`, {
