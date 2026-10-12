@@ -1,5 +1,4 @@
 import Link from "next/link";
-import SearchBar from "@/components/SearchBar";
 
 const popularMedicines = [
     { name: "Paracétamol", category: "Antalgique", icon: "💊", tint: "bg-green-100" },
@@ -11,7 +10,7 @@ const steps = [
     {
         icon: "🔍",
         title: "Recherchez",
-        text: "Tapez le nom du médicament dont vous avez besoin.",
+        text: "Choisissez le médicament dont vous avez besoin.",
     },
     {
         icon: "🏥",
@@ -60,8 +59,35 @@ export default function Home() {
                         pourraient le proposer près de chez vous.
                     </p>
 
-                    <div className="mt-10 w-full">
-                        <SearchBar />
+                    {/* Boutons de recherche */}
+                    <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                        <Link
+                            href="/medicaments"
+                            className="group inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-green-700"
+                        >
+                            <span aria-hidden="true">💊</span>
+                            Rechercher un médicament
+                            <span
+                                aria-hidden="true"
+                                className="transition group-hover:translate-x-0.5"
+                            >
+                                →
+                            </span>
+                        </Link>
+
+                        <Link
+                            href="/pharmacies"
+                            className="group inline-flex items-center justify-center gap-2 rounded-lg border border-green-600 bg-white px-5 py-2.5 text-sm font-medium text-green-700 transition hover:bg-green-50"
+                        >
+                            <span aria-hidden="true">🏥</span>
+                            Trouver une pharmacie
+                            <span
+                                aria-hidden="true"
+                                className="transition group-hover:translate-x-0.5"
+                            >
+                                →
+                            </span>
+                        </Link>
                     </div>
 
                     <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-500">
@@ -92,7 +118,7 @@ export default function Home() {
                     {popularMedicines.map((medicine) => (
                         <Link
                             key={medicine.name}
-                            href="/medicaments"
+                            href={`/medicaments?search=${encodeURIComponent(medicine.name)}`}
                             className="group flex items-center gap-4 rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-green-200 hover:shadow-md"
                         >
                             <div
@@ -175,7 +201,7 @@ export default function Home() {
                         <p className="mx-auto mt-3 max-w-xl text-green-50">
                             Consultez les horaires, les coordonnées et les
                             médicaments disponibles dans chaque pharmacie.
-                        </p>  
+                        </p>
 
                         <Link
                             href="/pharmacies"
