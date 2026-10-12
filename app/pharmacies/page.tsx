@@ -129,7 +129,7 @@ export default async function PharmaciesPage({
                                 ))}
                             </select>
 
-                            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm text-slate-700 hover:border-green-200">
+                            {/* <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm text-slate-700 hover:border-green-200">
                                 <input
                                     type="checkbox"
                                     name="open"
@@ -138,7 +138,7 @@ export default async function PharmaciesPage({
                                     className="h-4 w-4 accent-green-600"
                                 />
                                 Ouvertes maintenant
-                            </label>
+                            </label> */}
 
                             <button
                                 type="submit"

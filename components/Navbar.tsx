@@ -4,8 +4,13 @@ export default function Navbar() {
   return (
     <nav className="border-b bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="text-xl font-bold text-green-600">
-          Mediko
+        <Link href="/" className="flex items-center gap-2.5">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-xl font-bold text-white shadow-sm">
+                +
+            </span>
+            <span className="text-xl font-extrabold tracking-tight text-slate-900">
+                Medi<span className="text-emerald-600">ko</span>
+            </span>
         </Link>
 
         <div className="flex items-center gap-6">
