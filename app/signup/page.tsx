@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { createPharmacie } from "@/lib/service";
 
 type Role = "patient" | "pharmacy";
 
@@ -75,6 +76,11 @@ function SignUpForm() {
     const [loading, setLoading] = useState(false);
     const [pharmacySent, setPharmacySent] = useState(false);
 
+    //champ openingHours
+    const [dayOfWeek, setDayOfWeek] = useState(1);
+    const [opensAt, setOpensAt] = useState("08:00");
+    const [closesAt, setClosesAt] = useState("19:00");
+
     const current = config[role];
 
     function switchRole(next: Role) {
@@ -122,26 +128,29 @@ function SignUpForm() {
 
         setError("");
 
-        const payload =
-            role === "patient"
-                ? {
-                    //   role: "PATIENT",
-                      name: name.trim(),
-                      email: email.trim(),
-                      password,
-                  }
-                : {
-                    //   role: "PHARMACY",
-                      name: name.trim(), // nom du responsable
-                      email: email.trim(),
-                      password,
-                      pharmacy: {
-                          name: pharmacyName.trim(),
-                          address: address.trim(),
-                          city: city.trim(),
-                          phone: phone.trim(),
-                      },
-                  };
+        const payload = {
+            name: name.trim(),
+            email: email.trim(),
+            password,
+        };
+                // {
+                //     name: name.trim(),
+                //     email: email.trim(),
+                //     password,
+                //     pharmacy: {
+                //     name: pharmacyName.trim(),
+                //     address: address.trim(),
+                //     city: city.trim(),
+                //     phone: phone.trim(),
+                //     openingHours: [
+                //         {
+                //         dayOfWeek: Number(dayOfWeek),
+                //         opensAt,
+                //         closesAt,
+                //         },
+                //     ],
+                //     },
+                // };
 
         try {
             setLoading(true);
@@ -166,10 +175,22 @@ function SignUpForm() {
 
             if (role === "pharmacy") {
                 // Le compte pharmacie doit être validé avant utilisation
+                const respPh = await createPharmacie(name,address,city,phone,email,dayOfWeek,opensAt, closesAt)
+                if (respPh.status === 409) {
+                    setError("Un compte existe déjà avec cet email.");
+                    return;
+                }
+
+                if (!respPh.ok) {
+                    setError("Une erreur est survenue. Veuillez réessayer.");
+                    return;
+                }
+
                 setPharmacySent(true);
             } else {
                 router.push("/signin");
             }
+
         } catch {
             setError("Impossible de joindre le serveur. Réessayez.");
         } finally {
@@ -264,61 +285,112 @@ function SignUpForm() {
                 <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
                     {/* Bloc pharmacie */}
                     {role === "pharmacy" && (
-                        <fieldset className="flex flex-col gap-4 rounded-xl border p-4">
-                            <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Informations de la pharmacie
-                            </legend>
+                        <div>
+                            <fieldset className="flex flex-col gap-4 rounded-xl border p-4">
+                                <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    Informations de la pharmacie
+                                </legend>
 
-                            <Field id="pharmacyName" label="Nom de la pharmacie">
-                                <input
-                                    id="pharmacyName"
-                                    type="text"
-                                    value={pharmacyName}
-                                    onChange={(e) => setPharmacyName(e.target.value)}
-                                    placeholder="Pharmacie Analakely"
-                                    autoComplete="organization"
-                                    className={inputClass}
-                                />
-                            </Field>
-
-                            <Field id="address" label="Adresse">
-                                <input
-                                    id="address"
-                                    type="text"
-                                    value={address}
-                                    onChange={(e) => setAddress(e.target.value)}
-                                    placeholder="Rue, quartier"
-                                    autoComplete="street-address"
-                                    className={inputClass}
-                                />
-                            </Field>
-
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <Field id="city" label="Ville">
+                                <Field id="pharmacyName" label="Nom de la pharmacie">
                                     <input
-                                        id="city"
+                                        id="pharmacyName"
                                         type="text"
-                                        value={city}
-                                        onChange={(e) => setCity(e.target.value)}
-                                        placeholder="Antananarivo"
-                                        autoComplete="address-level2"
+                                        value={pharmacyName}
+                                        onChange={(e) => setPharmacyName(e.target.value)}
+                                        placeholder="Pharmacie Analakely"
+                                        autoComplete="organization"
                                         className={inputClass}
                                     />
                                 </Field>
 
-                                <Field id="phone" label="Téléphone">
+                                <Field id="address" label="Adresse">
                                     <input
-                                        id="phone"
-                                        type="tel"
-                                        value={phone}
-                                        onChange={(e) => setPhone(e.target.value)}
-                                        placeholder="+261 20 22 000 00"
-                                        autoComplete="tel"
+                                        id="address"
+                                        type="text"
+                                        value={address}
+                                        onChange={(e) => setAddress(e.target.value)}
+                                        placeholder="Rue, quartier"
+                                        autoComplete="street-address"
                                         className={inputClass}
                                     />
                                 </Field>
+
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <Field id="city" label="Ville">
+                                        <input
+                                            id="city"
+                                            type="text"
+                                            value={city}
+                                            onChange={(e) => setCity(e.target.value)}
+                                            placeholder="Antananarivo"
+                                            autoComplete="address-level2"
+                                            className={inputClass}
+                                        />
+                                    </Field>
+
+                                    <Field id="phone" label="Téléphone">
+                                        <input
+                                            id="phone"
+                                            type="tel"
+                                            value={phone}
+                                            onChange={(e) => setPhone(e.target.value)}
+                                            placeholder="+261 20 22 000 00"
+                                            autoComplete="tel"
+                                            className={inputClass}
+                                        />
+                                    </Field>
+                                </div>
+                                <div className="flex flex-col gap-4 border-t border-slate-200 pt-4">
+                                <h3 className="text-sm font-semibold text-slate-700">
+                                    Horaires d'ouverture
+                                </h3>
+
+                                <Field id="dayOfWeek" label="Jour d'ouverture">
+                                    <select
+                                    id="dayOfWeek"
+                                    value={dayOfWeek}
+                                    onChange={(e) => setDayOfWeek(Number(e.target.value))}
+                                    className={inputClass}
+                                    >
+                                    <option value="0">Dimanche</option>
+                                    <option value="1">Lundi</option>
+                                    <option value="2">Mardi</option>
+                                    <option value="3">Mercredi</option>
+                                    <option value="4">Jeudi</option>
+                                    <option value="5">Vendredi</option>
+                                    <option value="6">Samedi</option>
+                                    </select>
+                                </Field>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Field id="opensAt" label="Heure d'ouverture">
+                                    <input
+                                        id="opensAt"
+                                        type="time"
+                                        value={opensAt}
+                                        onChange={(e) => setOpensAt(e.target.value)}
+                                        required={role === "pharmacy"}
+                                        className={inputClass}
+                                    />
+                                    </Field>
+
+                                    <Field id="closesAt" label="Heure de fermeture">
+                                    <input
+                                        id="closesAt"
+                                        type="time"
+                                        value={closesAt}
+                                        onChange={(e) => setClosesAt(e.target.value)}
+                                        required={role === "pharmacy"}
+                                        className={inputClass}
+                                    />
+                                    </Field>
+                                </div>
                             </div>
-                        </fieldset>
+                            </fieldset>
+
+                            {/* Horaires d'ouverture */}
+                            
+                        </div>
                     )}
 
                     {/* Bloc compte */}
