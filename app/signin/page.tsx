@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { signin } from "@/lib/service";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
@@ -19,11 +20,16 @@ export default function SignInPage() {
     }
 
     try {
-      setLoading(true);
-      // TODO: appeler ton API d'authentification ici
-      console.log("Connexion :", { email, password });
-    } catch {
-      setError("Email ou mot de passe incorrect.");
+      const data = await signin(email.trim(), password);
+
+      // Exemple : adapte cette partie à la réponse réelle de ton API.
+      // console.log("Utilisateur connecté :", data);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Une erreur est survenue."
+      );
     } finally {
       setLoading(false);
     }
@@ -77,7 +83,7 @@ export default function SignInPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 rounded-lg bg-green-600 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-2 rounded-lg bg-emerald-600 py-3 font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>

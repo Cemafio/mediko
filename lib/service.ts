@@ -1,3 +1,5 @@
+import { log } from "node:console";
+
 const API_URL = "http://localhost:3005";
 // Fetch medicines from the backend
 export async function getMedicines() {
@@ -56,4 +58,31 @@ export async function getPharmacies() {
   console.log("Pharmacies reçues du backend :", data);
 
   return data;
+}
+export async function signin(email:string, password:string){
+  const response = await fetch(`${API_URL}/auth/signin`, {
+      method: "POST",
+      headers: {
+          "Content-Type": "application/json"
+      },
+      body: JSON.stringify(
+        {
+          email: email,
+          password: password,
+        }
+      )
+  });
+
+  if (!response.ok) {
+    console.log(response);
+    
+    throw new Error(`Erreur lors de la connexion.`);
+  }
+
+  const data = await response.json();
+
+  console.log("Connexion réussie :", data);
+
+  return data;
+
 }

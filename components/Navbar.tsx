@@ -35,10 +35,10 @@ export default function Navbar() {
             Pharmacies
           </Link>
           <Link
-            href="/dashboard"
+            href="/espace-pharmacie"
             className="text-sm text-slate-600 hover:text-green-600"
           >
-            Dashboard
+            Espace pharmacie
           </Link>
 
           <div className="ml-2 flex items-center gap-3 border-l pl-6">

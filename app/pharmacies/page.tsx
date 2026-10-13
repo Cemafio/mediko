@@ -211,7 +211,7 @@ export default async function PharmaciesPage({
                             <div key={pharmacy.id} className="relative">
                                 <PharmacyCard pharmacy={pharmacy} />
 
-                                <span
+                                {/* <span
                                     className={`absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
                                         status.isOpen
                                             ? "bg-green-100 text-green-700"
@@ -226,7 +226,7 @@ export default async function PharmaciesPage({
                                         }`}
                                     />
                                     {status.isOpen ? "Ouvert" : "Fermé"}
-                                </span>
+                                </span> */}
                             </div>
                         ))}
                     </div>
