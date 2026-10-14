@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createPharmacie } from "@/lib/service";
+import { log } from "node:console";
 
 type Role = "patient" | "pharmacy";
 
@@ -133,61 +134,59 @@ function SignUpForm() {
             email: email.trim(),
             password,
         };
-                // {
-                //     name: name.trim(),
-                //     email: email.trim(),
-                //     password,
-                //     pharmacy: {
-                //     name: pharmacyName.trim(),
-                //     address: address.trim(),
-                //     city: city.trim(),
-                //     phone: phone.trim(),
-                //     openingHours: [
-                //         {
-                //         dayOfWeek: Number(dayOfWeek),
-                //         opensAt,
-                //         closesAt,
-                //         },
-                //     ],
-                //     },
-                // };
 
         try {
             setLoading(true);
 
-            const res = await fetch(`http://localhost:3005/auth/signup`, {
-                method: "POST",
-                headers: { 
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (res.status === 409) {
-                setError("Un compte existe déjà avec cet email.");
-                return;
-            }
-
-            if (!res.ok) {
-                setError("Une erreur est survenue. Veuillez réessayer.");
-                return;
-            }
-
+            
             if (role === "pharmacy") {
-                // Le compte pharmacie doit être validé avant utilisation
-                const respPh = await createPharmacie(name,address,city,phone,email,dayOfWeek,opensAt, closesAt)
+                const respPh = await createPharmacie(
+                    pharmacyName.trim(),
+                    address.trim(),
+                    city.trim(),
+                    phone.trim(),
+                    email.trim(),
+                    password,
+                    Number(dayOfWeek),
+                    opensAt,
+                    closesAt
+                );
+
                 if (respPh.status === 409) {
                     setError("Un compte existe déjà avec cet email.");
                     return;
                 }
 
-                if (!respPh.ok) {
-                    setError("Une erreur est survenue. Veuillez réessayer.");
+                if (respPh.status !== 200 && respPh.status !== 201) {
+                    setError(
+                    Array.isArray(respPh.data?.message)
+                        ? respPh.data.message.join(", ")
+                        : respPh.data?.message ??
+                            "Erreur lors de l'inscription de la pharmacie."
+                    );
                     return;
                 }
 
                 setPharmacySent(true);
+                router.push("/signin");
             } else {
+                const res = await fetch(`http://localhost:3005/auth/signup`, {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (res.status === 409) {
+                    setError("Un compte existe déjà avec cet email.");
+                    return;
+                }
+
+                if (!res.ok) {
+                    setError("Une erreur est survenue client inscription. Veuillez réessayer.");
+                    return;
+                }
                 router.push("/signin");
             }
 

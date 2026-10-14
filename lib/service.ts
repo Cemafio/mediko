@@ -87,17 +87,19 @@ export async function signin(email:string, password:string){
 
 }
 
+
 export async function createPharmacie(
   name: string,
   address: string,
   city: string,
   phone: string,
   email: string,
+  password: string,
   dayOfWeek: number,
   opensAt: string,
   closesAt: string
 ) {
-  const response = await fetch(`${API_URL}/pharmacies`, {
+  const response = await fetch(`${API_URL}/auth/signupPharmacy`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -108,9 +110,10 @@ export async function createPharmacie(
       city,
       phone,
       email,
+      password,
       openingHours: [
         {
-          dayOfWeek,
+          dayOfWeek: Number(dayOfWeek),
           opensAt,
           closesAt,
         },
@@ -120,17 +123,8 @@ export async function createPharmacie(
 
   const data = await response.json().catch(() => null);
 
-  if (!response.ok) {
-    console.error("Erreur API :", data);
-
-    throw new Error(
-      Array.isArray(data?.message)
-        ? data.message.join(", ")
-        : data?.message ?? "Erreur lors de l'inscription de la pharmacie."
-    );
-  }
-
-  console.log("Inscription réussie :", data);
-
-  return data;
+  return {
+    status: response.status,
+    data,
+  };
 }
