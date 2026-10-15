@@ -54,7 +54,6 @@ export default async function PharmaciesPage({
 
     const filtered = all
         .filter(({ pharmacy, status }) => {
-            if (city && pharmacy.address !== city) return false;
             if (onlyOpen && !status.isOpen) return false;
             if (!query) return true;
 
