@@ -1,6 +1,15 @@
 import { log } from "node:console";
 
 const API_URL = "http://localhost:3005";
+
+type StockValues = {
+  name: string;
+  description: string;
+  dosage: string;
+  price: number;
+  quantity: number;
+};
+
 // Fetch medicines from the backend
 export async function getMedicines() {
   const response = await fetch(`${API_URL}/medicine`, {
@@ -21,6 +30,68 @@ export async function getMedicines() {
   return data;
 }
 
+export async function getStockPharmacy(accToken: string) {
+  const response = await fetch(`${API_URL}/pharmacy/stock`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accToken}`,
+    },
+    cache: "no-store", // le stock change : pas de cache Next.js
+  });
+
+  if (!response.ok) {
+    // Récupère le message de l'API (ex. "Votre compte est en attente de validation.")
+    const body = await response.json().catch(() => null);
+    throw new Error(
+      `Stock pharmacie : ${response.status} ${body?.message ?? response.statusText}`
+    );
+  }
+
+  return response.json();
+}
+
+async function stockRequest(path: string, accToken: string, init: RequestInit = {}) {
+  const response = await fetch(`${API_URL}/pharmacy/stock${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const message = Array.isArray(body?.message)
+      ? body.message.join(", ")
+      : body?.message ?? response.statusText;
+    throw new Error(message);
+  }
+
+  return response.json();
+}
+
+
+export function createMedicinesStock(accToken: string, values: StockValues) {
+  return stockRequest("", accToken, {
+    method: "POST",
+    body: JSON.stringify(values),
+  });
+}
+
+export function updateMedicinesStock(id: string, accToken: string, values: StockValues) {
+  return stockRequest(`/${encodeURIComponent(id)}`, accToken, {
+    method: "PATCH",
+    body: JSON.stringify(values),
+  });
+}
+
+export function deleteMedicinesStock(id: string, accToken: string) {
+  return stockRequest(`/${encodeURIComponent(id)}`, accToken, {
+    method: "DELETE",
+  });
+}
 export async function getOneMedicine(id: string) {
   const response = await fetch(`${API_URL}/medicine/${id}`, {
     method: "GET",
@@ -128,3 +199,4 @@ export async function createPharmacie(
     data,
   };
 }
+

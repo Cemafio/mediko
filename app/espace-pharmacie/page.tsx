@@ -1,10 +1,12 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { medicines } from "@/data/medicine";
+import { createMedicinesStock, getStockPharmacy, updateMedicinesStock } from "@/lib/service";
+import { useEffect, useMemo, useState } from "react";
 
 type Medicine = {
-    id: number;
+    id: string;
     name: string;
     description: string;
     dosage: string;
@@ -12,13 +14,19 @@ type Medicine = {
     quantity: number;
 };
 
-const initialMedicines: Medicine[] = [
-    { id: 1, name: "Paracétamol", description: "Antidouleur et antipyrétique", dosage: "500 mg", price: 1500, quantity: 50 },
-    { id: 2, name: "Amoxicilline", description: "Antibiotique", dosage: "250 mg", price: 2000, quantity: 5 },
-    { id: 3, name: "Ibuprofène", description: "Anti-inflammatoire", dosage: "400 mg", price: 1800, quantity: 0 },
-    { id: 4, name: "Loratadine", description: "Antihistaminique", dosage: "10 mg", price: 1200, quantity: 25 },
-    { id: 5, name: "Oméprazole", description: "Antiulcéreux", dosage: "20 mg", price: 2500, quantity: 8 },
-];
+const accToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXY4Y2UwNnQwMDA0b2dzYnJreW1tejc2IiwiZW1haWwiOiJhbXBhbmRyYW5hQGV4YW1wbGUuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3OTIwNzMzMTUsImV4cCI6MTc5MjE1OTcxNX0.N1Y5ZLycs7Df2TMmWthaWVealrgPI14AcoJd8mpRKHU";
+
+// const list = await getStockPharmacy(accToken);
+
+// console.log(list);
+
+// const initialMedicines:Medicine[] = [
+//     { id: 1, name: "Paracétamol", description: "Antidouleur et antipyrétique", dosage: "500 mg", price: 1500, quantity: 50 },
+//     { id: 2, name: "Amoxicilline", description: "Antibiotique", dosage: "250 mg", price: 2000, quantity: 5 },
+//     { id: 3, name: "Ibuprofène", description: "Anti-inflammatoire", dosage: "400 mg", price: 1800, quantity: 0 },
+//     { id: 4, name: "Loratadine", description: "Antihistaminique", dosage: "10 mg", price: 1200, quantity: 25 },
+//     { id: 5, name: "Oméprazole", description: "Antiulcéreux", dosage: "20 mg", price: 2500, quantity: 8 },
+// ];
 
 const initialPharmacy = {
     name: "Pharmacie Ambohipo",
@@ -41,25 +49,91 @@ function getStatus(quantity: number) {
     return { label: "En stock", color: "bg-emerald-50 text-emerald-700" };
 }
 
+
 export default function PharmacyDashboardPage() {
-    const [medicines, setMedicines] = useState(initialMedicines);
+    const [medicines, setMedicines] = useState<Medicine[]>([]);
     const [pharmacy, setPharmacy] = useState(initialPharmacy);
+
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("Tous les statuts");
     const [editing, setEditing] = useState<Medicine | null>(null);
     const [adding, setAdding] = useState(false);
     const [editingPharmacy, setEditingPharmacy] = useState(false);
-    const [deleting, setDeleting] = useState<number | null>(null);
+    const [deleting, setDeleting] = useState<string | null>(null);
     const [notice, setNotice] = useState("");
+
+    const [saving, setSaving] = useState(false);
+    const [formError, setFormError] = useState("");
+    const [loadingStock, setLoadingStock] = useState(true);
+    const [stockError, setStockError] = useState("");
+    const [today, setToday] = useState("");
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadStock() {
+            try {
+                setLoadingStock(true);
+                setStockError("");
+
+                const data = await getStockPharmacy(accToken);
+
+                if (!cancelled) {
+                    // Cette version suppose que l'API renvoie directement un tableau.
+                    if (!Array.isArray(data)) {
+                        throw new Error(
+                            "Le format des données du stock est incorrect."
+                        );
+                    }
+
+                    setMedicines(data);
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    setStockError(
+                        error instanceof Error
+                            ? error.message
+                            : "Impossible de récupérer le stock."
+                    );
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoadingStock(false);
+                }
+            }
+        }
+
+        // La date est calculée après le premier rendu.
+        setToday(
+            new Intl.DateTimeFormat("fr-FR", {
+                dateStyle: "full",
+            }).format(new Date())
+        );
+
+        void loadStock();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     const stats = useMemo(() => ({
         total: medicines.length,
-        low: medicines.filter(m => m.quantity > 0 && m.quantity <= 8).length,
-        out: medicines.filter(m => m.quantity === 0).length,
-        units: medicines.reduce((sum, m) => sum + m.quantity, 0),
+        low: medicines.filter(
+            (m) => m.quantity > 0 && m.quantity <= 8
+        ).length,
+        out: medicines.filter(
+            (m) => m.quantity === 0
+        ).length,
+        units: medicines.reduce(
+            (sum, m) => sum + m.quantity,
+            0
+        ),
     }), [medicines]);
 
-    const visibleMedicines = medicines.filter(m => {
+    // Garde ici le reste de tes fonctions et de ton composant.
+
+    const visibleMedicines = medicines.filter((m:any) => {
         const matchesSearch = `${m.name} ${m.dosage} ${m.description}`
             .toLowerCase().includes(search.toLowerCase());
 
@@ -72,33 +146,63 @@ export default function PharmacyDashboardPage() {
         return matchesSearch && matchesFilter;
     });
 
-    function saveMedicine(event: React.FormEvent<HTMLFormElement>) {
+
+    async function saveMedicine(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
 
-        const medicine: Medicine = {
-            id: editing?.id ?? Math.max(0, ...medicines.map(m => m.id)) + 1,
+        const values = {
             name: String(data.get("name")).trim(),
-            description: String(data.get("description")).trim(),
+            description: String(data.get("description") ?? "").trim(),
             dosage: String(data.get("dosage")).trim(),
             price: Number(data.get("price")),
             quantity: Number(data.get("quantity")),
         };
 
-        if (!medicine.name || medicine.price < 0 || medicine.quantity < 0) return;
-
-        if (editing) {
-            setMedicines(prev => prev.map(m => m.id === editing.id ? medicine : m));
-            setNotice("Médicament modifié.");
-        } else {
-            setMedicines(prev => [...prev, medicine]);
-            setNotice("Médicament ajouté au stock.");
+        if (!values.name || !values.dosage) {
+            setFormError("Le nom et le dosage sont obligatoires.");
+            return;
         }
 
-        setEditing(null);
-        setAdding(false);
-    }
+        if (
+            !Number.isFinite(values.price) ||
+            values.price < 0 ||
+            !Number.isInteger(values.quantity) ||
+            values.quantity < 0
+        ) {
+            setFormError("Prix et quantité doivent être des nombres positifs (quantité entière).");
+            return;
+        }
 
+        setFormError("");
+        setSaving(true);
+
+        try {
+            if (editing) {
+                const saved: Medicine = await updateMedicinesStock(editing.id, accToken, ...[values]);
+
+                // On remplace par la réponse du serveur (l'id peut avoir changé après un renommage)
+                setMedicines((prev: Medicine[]) =>
+                    prev.map((m) => (m.id === editing.id ? saved : m))
+                );
+                setNotice("Médicament modifié.");
+            } else {
+                const saved: Medicine = await createMedicinesStock(accToken, values);
+
+                setMedicines((prev: Medicine[]) => [...prev, saved]);
+                setNotice("Médicament ajouté au stock.");
+            }
+
+            setEditing(null);
+            setAdding(false);
+        } catch (error) {
+            setFormError(
+                error instanceof Error ? error.message : "Une erreur est survenue."
+            );
+        } finally {
+            setSaving(false);
+        }
+    }
     function savePharmacy(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -116,7 +220,7 @@ export default function PharmacyDashboardPage() {
     }
 
     function deleteMedicine() {
-        setMedicines(prev => prev.filter(m => m.id !== deleting));
+        setMedicines((prev:any) => prev.filter((m:any) => m.id !== deleting));
         setDeleting(null);
         setNotice("Médicament supprimé.");
     }
@@ -137,7 +241,9 @@ export default function PharmacyDashboardPage() {
                             <h1 className="text-3xl font-extrabold tracking-tight text-slate-950">Tableau de bord</h1>
                             <p className="mt-1 text-sm text-slate-500">Gérez votre stock et vos informations en toute simplicité.</p>
                         </div>
-                        <p className="text-sm text-slate-500">{new Intl.DateTimeFormat("fr-FR", { dateStyle: "full" }).format(new Date())}</p>
+                        <p className="text-sm text-slate-500">
+                            {today || "Chargement de la date..."}
+                        </p>                    
                     </section>
 
                     {notice && (
@@ -245,6 +351,18 @@ export default function PharmacyDashboardPage() {
                         </div>
                     </section>
 
+                    {loadingStock && (
+                        <p role="status" className="text-sm text-slate-500">
+                            Chargement du stock...
+                        </p>
+                    )}
+
+                    {stockError && (
+                        <p role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-700">
+                            {stockError}
+                        </p>
+                    )}
+
                     {/* TABLEAU DU STOCK */}
                     <section id="stock" className="scroll-mt-24 overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm">
                         <div className="flex flex-col justify-between gap-4 border-b border-slate-100 p-5 lg:flex-row lg:items-center">
@@ -273,7 +391,7 @@ export default function PharmacyDashboardPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {visibleMedicines.map(medicine => {
+                                    {visibleMedicines.map((medicine:Medicine) => {
                                         const status = getStatus(medicine.quantity);
                                         return (
                                             <tr key={medicine.id} className="transition hover:bg-slate-50">
@@ -335,9 +453,20 @@ export default function PharmacyDashboardPage() {
                                     <input name={name} required={name === "name" || name === "price" || name === "quantity"} defaultValue={value} type={name === "price" || name === "quantity" ? "number" : "text"} min={name === "price" || name === "quantity" ? "0" : undefined} className={inputClass} />
                                 </label>
                             ))}
+
+                            {formError && (
+                                <p role="alert" className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">
+                                    {formError}
+                                </p>
+                            )}
+
                             <div className="flex justify-end gap-3 pt-2">
-                                <button type="button" onClick={() => { setAdding(false); setEditing(null); }} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold">Annuler</button>
-                                <button type="submit" className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">{editing ? "Enregistrer" : "Ajouter"}</button>
+                                <button type="button" onClick={() => { setAdding(false); setEditing(null); setFormError(""); }} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold">
+                                    Annuler
+                                </button>
+                                <button type="submit" disabled={saving} className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">
+                                    {saving ? "Enregistrement..." : editing ? "Enregistrer" : "Ajouter"}
+                                </button>
                             </div>
                         </form>
                     </div>
