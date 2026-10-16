@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { log } from "node:console";
 
 const API_URL = "http://localhost:3005";
@@ -30,13 +31,8 @@ export async function getMedicines() {
   return data;
 }
 
-export async function getStockPharmacy(accToken: string) {
-  const response = await fetch(`${API_URL}/pharmacy/stock`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accToken}`,
-    },
+export async function getStockPharmacy() {
+  const response = await fetch(`/api/pharmacy/stock`, {
     cache: "no-store", // le stock change : pas de cache Next.js
   });
 
@@ -51,47 +47,58 @@ export async function getStockPharmacy(accToken: string) {
   return response.json();
 }
 
-async function stockRequest(path: string, accToken: string, init: RequestInit = {}) {
-  const response = await fetch(`${API_URL}/pharmacy/stock${path}`, {
+async function stockRequest(
+  path: string,
+  init: RequestInit = {},
+) {
+  const response = await fetch(`/api/pharmacy/stock${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accToken}`,
+      ...init.headers,
     },
     cache: "no-store",
   });
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
+
     const message = Array.isArray(body?.message)
       ? body.message.join(", ")
       : body?.message ?? response.statusText;
+
     throw new Error(message);
   }
+
+  // DELETE peut parfois retourner 204 No Content.
+  if (response.status === 204) return null;
 
   return response.json();
 }
 
-
-export function createMedicinesStock(accToken: string, values: StockValues) {
-  return stockRequest("", accToken, {
+export function createMedicinesStock(values: StockValues) {
+  return stockRequest("", {
     method: "POST",
     body: JSON.stringify(values),
   });
 }
 
-export function updateMedicinesStock(id: string, accToken: string, values: StockValues) {
-  return stockRequest(`/${encodeURIComponent(id)}`, accToken, {
+export function updateMedicinesStock(
+  id: string,
+  values: StockValues,
+) {
+  return stockRequest(`/${encodeURIComponent(id)}`, {
     method: "PATCH",
     body: JSON.stringify(values),
   });
 }
 
-export function deleteMedicinesStock(id: string, accToken: string) {
-  return stockRequest(`/${encodeURIComponent(id)}`, accToken, {
+export function deleteMedicinesStock(id: string) {
+  return stockRequest(`/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 }
+
 export async function getOneMedicine(id: string) {
   const response = await fetch(`${API_URL}/medicine/${id}`, {
     method: "GET",
@@ -130,32 +137,25 @@ export async function getPharmacies() {
 
   return data;
 }
-export async function signin(email:string, password:string){
-  const response = await fetch(`${API_URL}/auth/signin`, {
-      method: "POST",
-      headers: {
-          "Content-Type": "application/json"
-      },
-      body: JSON.stringify(
-        {
-          email: email,
-          password: password,
-        }
-      )
-  });
 
-  if (!response.ok) {
-    console.log(response);
-    
-    throw new Error(`Erreur lors de la connexion.`);
-  }
+export async function signin(email: string, password: string) {
+    const response = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+    });
 
-  const data = await response.json();
+    const data = await response.json();
 
-  console.log("Connexion réussie :", data);
+    if (!response.ok) {
+        throw new Error(
+            data.message ?? "Email ou mot de passe incorrect."
+        );
+    }
 
-  return data;
-
+    return data;
 }
 
 

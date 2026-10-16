@@ -1,4 +1,3 @@
-
 "use client";
 
 import { medicines } from "@/data/medicine";
@@ -15,18 +14,6 @@ type Medicine = {
 };
 
 const accToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXY4Y2UwNnQwMDA0b2dzYnJreW1tejc2IiwiZW1haWwiOiJhbXBhbmRyYW5hQGV4YW1wbGUuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3OTIwNzMzMTUsImV4cCI6MTc5MjE1OTcxNX0.N1Y5ZLycs7Df2TMmWthaWVealrgPI14AcoJd8mpRKHU";
-
-// const list = await getStockPharmacy(accToken);
-
-// console.log(list);
-
-// const initialMedicines:Medicine[] = [
-//     { id: 1, name: "Paracétamol", description: "Antidouleur et antipyrétique", dosage: "500 mg", price: 1500, quantity: 50 },
-//     { id: 2, name: "Amoxicilline", description: "Antibiotique", dosage: "250 mg", price: 2000, quantity: 5 },
-//     { id: 3, name: "Ibuprofène", description: "Anti-inflammatoire", dosage: "400 mg", price: 1800, quantity: 0 },
-//     { id: 4, name: "Loratadine", description: "Antihistaminique", dosage: "10 mg", price: 1200, quantity: 25 },
-//     { id: 5, name: "Oméprazole", description: "Antiulcéreux", dosage: "20 mg", price: 2500, quantity: 8 },
-// ];
 
 const initialPharmacy = {
     name: "Pharmacie Ambohipo",
@@ -76,7 +63,7 @@ export default function PharmacyDashboardPage() {
                 setLoadingStock(true);
                 setStockError("");
 
-                const data = await getStockPharmacy(accToken);
+                const data = await getStockPharmacy();
 
                 if (!cancelled) {
                     // Cette version suppose que l'API renvoie directement un tableau.
@@ -179,7 +166,7 @@ export default function PharmacyDashboardPage() {
 
         try {
             if (editing) {
-                const saved: Medicine = await updateMedicinesStock(editing.id, accToken, ...[values]);
+                const saved: Medicine = await updateMedicinesStock(editing.id, ...[values]);
 
                 // On remplace par la réponse du serveur (l'id peut avoir changé après un renommage)
                 setMedicines((prev: Medicine[]) =>
@@ -187,7 +174,7 @@ export default function PharmacyDashboardPage() {
                 );
                 setNotice("Médicament modifié.");
             } else {
-                const saved: Medicine = await createMedicinesStock(accToken, values);
+                const saved: Medicine = await createMedicinesStock(values);
 
                 setMedicines((prev: Medicine[]) => [...prev, saved]);
                 setNotice("Médicament ajouté au stock.");

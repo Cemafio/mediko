@@ -22,7 +22,6 @@ export default function SignInPage() {
     try {
       const data = await signin(email.trim(), password);
 
-      // Exemple : adapte cette partie à la réponse réelle de ton API.
       // console.log("Utilisateur connecté :", data);
     } catch (error) {
       setError(
