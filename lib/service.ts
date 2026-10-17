@@ -168,7 +168,8 @@ export async function createPharmacie(
   password: string,
   dayOfWeek: number,
   opensAt: string,
-  closesAt: string
+  closesAt: string,
+  role:string
 ) {
   const response = await fetch(`${API_URL}/auth/signupPharmacy`, {
     method: "POST",
@@ -182,6 +183,7 @@ export async function createPharmacie(
       phone,
       email,
       password,
+      role,
       openingHours: [
         {
           dayOfWeek: Number(dayOfWeek),

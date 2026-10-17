@@ -1,45 +1,58 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+type User = {
+  role: string;
+};
 
 export default function Navbar() {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        return res.json();
+      })
+      .then((data) => setUser(data))
+      .catch(() => setUser(null));
+  }, []);
+
   return (
     <nav className="border-b bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-xl font-bold text-white shadow-sm">
-                +
-            </span>
-            <span className="text-xl font-extrabold tracking-tight text-slate-900">
-                Medi<span className="text-emerald-600">ko</span>
-            </span>
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-xl font-bold text-white shadow-sm">
+            +
+          </span>
+          <span className="text-xl font-extrabold tracking-tight text-slate-900">
+            Medi<span className="text-emerald-600">ko</span>
+          </span>
         </Link>
 
         <div className="flex items-center gap-6">
-          <Link
-            href="/"
-            className="text-sm text-slate-600 hover:text-green-600"
-          >
+          <Link href="/" className="text-sm text-slate-600 hover:text-green-600">
             Accueil
           </Link>
 
-          <Link
-            href="/medicaments"
-            className="text-sm text-slate-600 hover:text-green-600"
-          >
+          <Link href="/medicaments" className="text-sm text-slate-600 hover:text-green-600">
             Médicaments
           </Link>
 
-          <Link
-            href="/pharmacies"
-            className="text-sm text-slate-600 hover:text-green-600"
-          >
+          <Link href="/pharmacies" className="text-sm text-slate-600 hover:text-green-600">
             Pharmacies
           </Link>
-          <Link
-            href="/espace-pharmacie"
-            className="text-sm text-slate-600 hover:text-green-600"
-          >
-            Espace pharmacie
-          </Link>
+
+          {user?.role === "PHARMACIST" && (
+            <Link
+              href="/espace-pharmacie"
+              className="text-sm text-slate-600 hover:text-green-600"
+            >
+              Espace pharmacie
+            </Link>
+          )}
 
           <div className="ml-2 flex items-center gap-3 border-l pl-6">
             <Link

@@ -5,7 +5,7 @@ const API_URL = process.env.API_URL ?? "http://localhost:3005";
 
 export async function POST(request: NextRequest) {
     try {
-        const { email, password } = await request.json();
+        const { email, password} = await request.json();
 
         if (!email || !password) {
             return NextResponse.json(

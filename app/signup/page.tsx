@@ -118,7 +118,7 @@ function SignUpForm() {
         return "";
     }
 
-    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {  
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
         const message = validate();
@@ -133,12 +133,13 @@ function SignUpForm() {
             name: name.trim(),
             email: email.trim(),
             password,
+            role: "USER"
         };
 
         try {
             setLoading(true);
 
-            
+
             if (role === "pharmacy") {
                 const respPh = await createPharmacie(
                     pharmacyName.trim(),
@@ -149,7 +150,8 @@ function SignUpForm() {
                     password,
                     Number(dayOfWeek),
                     opensAt,
-                    closesAt
+                    closesAt,
+                    "PHARMACIST"
                 );
 
                 if (respPh.status === 409) {
@@ -159,9 +161,9 @@ function SignUpForm() {
 
                 if (respPh.status !== 200 && respPh.status !== 201) {
                     setError(
-                    Array.isArray(respPh.data?.message)
-                        ? respPh.data.message.join(", ")
-                        : respPh.data?.message ??
+                        Array.isArray(respPh.data?.message)
+                            ? respPh.data.message.join(", ")
+                            : respPh.data?.message ??
                             "Erreur lors de l'inscription de la pharmacie."
                     );
                     return;
@@ -172,7 +174,7 @@ function SignUpForm() {
             } else {
                 const res = await fetch(`http://localhost:3005/auth/signup`, {
                     method: "POST",
-                    headers: { 
+                    headers: {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify(payload),
@@ -244,11 +246,10 @@ function SignUpForm() {
                             role="tab"
                             aria-selected={role === r}
                             onClick={() => switchRole(r)}
-                            className={`rounded-md px-3 py-2 text-sm font-medium transition ${
-                                role === r
+                            className={`rounded-md px-3 py-2 text-sm font-medium transition ${role === r
                                     ? "bg-white text-green-700 shadow-sm"
                                     : "text-slate-500 hover:text-slate-800"
-                            }`}
+                                }`}
                         >
                             {r === "patient" ? "Patient" : "Pharmacie"}
                         </button>
@@ -340,55 +341,55 @@ function SignUpForm() {
                                     </Field>
                                 </div>
                                 <div className="flex flex-col gap-4 border-t border-slate-200 pt-4">
-                                <h3 className="text-sm font-semibold text-slate-700">
-                                    Horaires d'ouverture
-                                </h3>
+                                    <h3 className="text-sm font-semibold text-slate-700">
+                                        Horaires d'ouverture
+                                    </h3>
 
-                                <Field id="dayOfWeek" label="Jour d'ouverture">
-                                    <select
-                                    id="dayOfWeek"
-                                    value={dayOfWeek}
-                                    onChange={(e) => setDayOfWeek(Number(e.target.value))}
-                                    className={inputClass}
-                                    >
-                                    <option value="0">Dimanche</option>
-                                    <option value="1">Lundi</option>
-                                    <option value="2">Mardi</option>
-                                    <option value="3">Mercredi</option>
-                                    <option value="4">Jeudi</option>
-                                    <option value="5">Vendredi</option>
-                                    <option value="6">Samedi</option>
-                                    </select>
-                                </Field>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <Field id="opensAt" label="Heure d'ouverture">
-                                    <input
-                                        id="opensAt"
-                                        type="time"
-                                        value={opensAt}
-                                        onChange={(e) => setOpensAt(e.target.value)}
-                                        required={role === "pharmacy"}
-                                        className={inputClass}
-                                    />
+                                    <Field id="dayOfWeek" label="Jour d'ouverture">
+                                        <select
+                                            id="dayOfWeek"
+                                            value={dayOfWeek}
+                                            onChange={(e) => setDayOfWeek(Number(e.target.value))}
+                                            className={inputClass}
+                                        >
+                                            <option value="0">Dimanche</option>
+                                            <option value="1">Lundi</option>
+                                            <option value="2">Mardi</option>
+                                            <option value="3">Mercredi</option>
+                                            <option value="4">Jeudi</option>
+                                            <option value="5">Vendredi</option>
+                                            <option value="6">Samedi</option>
+                                        </select>
                                     </Field>
 
-                                    <Field id="closesAt" label="Heure de fermeture">
-                                    <input
-                                        id="closesAt"
-                                        type="time"
-                                        value={closesAt}
-                                        onChange={(e) => setClosesAt(e.target.value)}
-                                        required={role === "pharmacy"}
-                                        className={inputClass}
-                                    />
-                                    </Field>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Field id="opensAt" label="Heure d'ouverture">
+                                            <input
+                                                id="opensAt"
+                                                type="time"
+                                                value={opensAt}
+                                                onChange={(e) => setOpensAt(e.target.value)}
+                                                required={role === "pharmacy"}
+                                                className={inputClass}
+                                            />
+                                        </Field>
+
+                                        <Field id="closesAt" label="Heure de fermeture">
+                                            <input
+                                                id="closesAt"
+                                                type="time"
+                                                value={closesAt}
+                                                onChange={(e) => setClosesAt(e.target.value)}
+                                                required={role === "pharmacy"}
+                                                className={inputClass}
+                                            />
+                                        </Field>
+                                    </div>
                                 </div>
-                            </div>
                             </fieldset>
 
                             {/* Horaires d'ouverture */}
-                            
+
                         </div>
                     )}
 
