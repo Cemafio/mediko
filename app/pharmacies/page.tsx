@@ -3,7 +3,6 @@ import Link from "next/link";
 import PharmacyCard from "@/components/pharmacieCard";
 import { pharmacies } from "@/data/pharmacies";
 import { getOpenStatus } from "@/lib/openingHours";
-import { log } from "node:console";
 
 // Le statut Ouvert/Fermé dépend de l'heure : on évite le cache statique
 export const dynamic = "force-dynamic";
@@ -47,13 +46,20 @@ export default async function PharmaciesPage({
     }));
 
     const cities = Array.from(
-        new Set(all.map(({ pharmacy }) => String(pharmacy.address)))
+        new Set(
+            all
+                .map(({ pharmacy }) => String(pharmacy.city ?? "").trim())
+                .filter(Boolean)
+        )
     ).sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }));
 
     const query = search ? normalize(search) : "";
 
     const filtered = all
         .filter(({ pharmacy, status }) => {
+            if (city && normalize(String(pharmacy.city ?? "")) !== normalize(city)) {
+                return false;
+            }
             if (onlyOpen && !status.isOpen) return false;
             if (!query) return true;
 
@@ -67,7 +73,7 @@ export default async function PharmaciesPage({
             })
         );
 
-    const openCount = all.filter(({ status }) => status.isOpen).length;
+    // const openCount = all.filter(({ status }) => status.isOpen).length;
     const hasFilters = Boolean(search || city || onlyOpen);
 
     return (
@@ -84,11 +90,11 @@ export default async function PharmaciesPage({
                         les médicaments qu&apos;elles proposent.
                     </p>
 
-                    <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-green-200 bg-white px-3 py-1 text-sm text-green-700 shadow-sm">
+                    {/* <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-green-200 bg-white px-3 py-1 text-sm text-green-700 shadow-sm">
                         <span className="h-2 w-2 rounded-full bg-green-500" />
                         {openCount} pharmacie{openCount > 1 ? "s" : ""} ouverte
                         {openCount > 1 ? "s" : ""} actuellement
-                    </div>
+                    </div> */}
 
                     {/* Recherche et filtres (fonctionne sans JavaScript) */}
                     <form
