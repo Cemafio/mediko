@@ -1,5 +1,6 @@
 "use client";
 
+import OpeningHoursManager from "@/components/opeeningHoursManager";
 import { medicines } from "@/data/medicine";
 import { createMedicinesStock, getOnePharmacy, getStockPharmacy, updateMedicinesStock, updatePharmacie } from "@/lib/service";
 import { useEffect, useMemo, useState } from "react";
@@ -13,12 +14,10 @@ type Medicine = {
     quantity: number;
 };
 
-const initialPharmacy = {
-    name: "Pharmacie Ambohipo",
-    address: "3 Chemis Ambohipo",
-    city: "Antananarivo",
-    phone: "+261 39 00 000 00",
-    email: "contact@ambohipo.mg",
+type OpeningHour = {
+  dayOfWeek: number;
+  opensAt: string;
+  closesAt: string;
 };
 
 type Pharmacie = {
@@ -26,8 +25,18 @@ type Pharmacie = {
     email:string,
     phone:string,
     city:string,
-    address:string
+    address:string,
+    openingHours: OpeningHour[]
 }
+
+type DaySchedule = {
+    dayOfWeek: number;
+    day: string;
+    // isOpen?: boolean;
+    opensAt: string;
+    closesAt: string;
+};
+
 
 const formatPrice = (price: number) =>
     new Intl.NumberFormat("fr-FR").format(price);
@@ -51,6 +60,7 @@ export default function PharmacyDashboardPage() {
     const [filter, setFilter] = useState("Tous les statuts");
     const [editing, setEditing] = useState<Medicine | null>(null);
     const [adding, setAdding] = useState(false);
+    const [editingHours, setEditingHours] = useState(false);
     const [editingPharmacy, setEditingPharmacy] = useState(false);
     const [deleting, setDeleting] = useState<string | null>(null);
     const [notice, setNotice] = useState("");
@@ -60,6 +70,7 @@ export default function PharmacyDashboardPage() {
     const [loadingStock, setLoadingStock] = useState(true);
     const [stockError, setStockError] = useState("");
     const [today, setToday] = useState("");
+    const [schedule, setSchedule] = useState<DaySchedule[]>([]);
 
     useEffect(() => {
         let cancelled = false;
@@ -72,7 +83,6 @@ export default function PharmacyDashboardPage() {
                 const data = await getStockPharmacy();
                 const pharmacy = await getOnePharmacy()
 
-                console.log(pharmacy);
             
 
                 if (!cancelled) {
@@ -85,6 +95,10 @@ export default function PharmacyDashboardPage() {
 
                     setMedicines(data);
                     setPharmacy(pharmacy)
+                    setSchedule([...pharmacy.openingHours])
+
+                    console.log(`Opening hours: ${schedule}`);
+
                 }
             } catch (error) {
                 if (!cancelled) {
@@ -211,7 +225,6 @@ export default function PharmacyDashboardPage() {
             address: String(data.get("address")).trim(),
             city: String(data.get("city")).trim(),
             phone: String(data.get("phone")).trim(),
-            // email: String(data.get("email")).trim(),
         };
 
 
@@ -246,6 +259,7 @@ export default function PharmacyDashboardPage() {
     }
 
     const inputClass = "mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10";
+
 
     return (
         <div className="min-h-screen bg-[#f5f7f8] text-slate-800 lg:flex">
@@ -327,23 +341,54 @@ export default function PharmacyDashboardPage() {
                                 </div>
 
                                 <div className="border-t border-slate-100 p-5 md:border-l md:border-t-0">
-                                    <h3 className="mb-4 font-bold text-slate-900">◷ &nbsp; Horaires d&apos;ouverture</h3>
+                                    <h3 className="mb-4 font-bold text-slate-900">
+                                        ◷ &nbsp; Horaires d&apos;ouverture
+                                    </h3>
+
                                     {[
-                                        ["Lundi", "08:00 - 11:00"],
-                                        ["Mardi", "Fermé"],
-                                        ["Mercredi", "Fermé"],
-                                        ["Jeudi", "Fermé"],
-                                        ["Vendredi", "Fermé"],
-                                        ["Samedi", "08:00 - 13:00"],
-                                        ["Dimanche", "Fermé"],
-                                    ].map(([day, hours]) => (
-                                        <div key={day} className="flex justify-between gap-3 border-b border-slate-100 py-2 text-xs">
+                                        { dayOfWeek: 1, day: "Lundi" },
+                                        { dayOfWeek: 2, day: "Mardi" },
+                                        { dayOfWeek: 3, day: "Mercredi" },
+                                        { dayOfWeek: 4, day: "Jeudi" },
+                                        { dayOfWeek: 5, day: "Vendredi" },
+                                        { dayOfWeek: 6, day: "Samedi" },
+                                        { dayOfWeek: 0, day: "Dimanche" },
+                                    ].map(({ dayOfWeek, day }) => {
+                                        const hours = pharmacy?.openingHours?.find(
+                                        (item) => item.dayOfWeek === dayOfWeek
+                                        );
+
+                                        const isClosed = !hours;
+
+                                        return (
+                                        <div
+                                            key={dayOfWeek}
+                                            className="flex justify-between gap-3 border-b border-slate-100 py-2 text-xs"
+                                        >
                                             <span className="text-slate-600">{day}</span>
-                                            <span className={hours === "Fermé" ? "text-red-500" : "font-medium text-slate-700"}>{hours}</span>
+
+                                            <span
+                                            className={
+                                                isClosed
+                                                ? "text-red-500"
+                                                : "font-medium text-slate-700"
+                                            }
+                                            >
+                                            {hours
+                                                ? `${hours.opensAt} - ${hours.closesAt}`
+                                                : "Fermé"}
+                                            </span>
                                         </div>
-                                    ))}
-                                    <button onClick={() => setNotice("La modification des horaires sera connectée au backend.")} className="mt-4 text-sm font-semibold text-emerald-700 hover:underline">Gérer les horaires →</button>
-                                </div>
+                                        );
+                                    })}
+
+                                    <button
+                                        onClick={() => setEditingHours(true)}
+                                        className="mt-4 text-sm font-semibold text-emerald-700 hover:underline"
+                                    >
+                                        Gérer les horaires →
+                                    </button>
+                                    </div>
                             </div>
                         </div>
 
@@ -515,6 +560,26 @@ export default function PharmacyDashboardPage() {
                                 <button type="submit" className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white">Enregistrer</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODIFIER HORAIRES */}
+            {editingHours && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/50 p-4 backdrop-blur-sm"
+                    onClick={() => setEditingHours(false)}
+                >
+                    <div
+                        role="dialog"
+                        arial-modal="true"
+                        aria-labelledby="pharmacy-hours"
+                        className="my-auto w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                    <OpeningHoursManager
+                        initialHours={pharmacy?.openingHours ?? []}
+                    />
                     </div>
                 </div>
             )}
