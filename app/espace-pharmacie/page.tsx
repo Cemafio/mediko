@@ -1,7 +1,7 @@
 "use client";
 
 import { medicines } from "@/data/medicine";
-import { createMedicinesStock, getStockPharmacy, updateMedicinesStock } from "@/lib/service";
+import { createMedicinesStock, getOnePharmacy, getStockPharmacy, updateMedicinesStock, updatePharmacie } from "@/lib/service";
 import { useEffect, useMemo, useState } from "react";
 
 type Medicine = {
@@ -13,8 +13,6 @@ type Medicine = {
     quantity: number;
 };
 
-const accToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXY4Y2UwNnQwMDA0b2dzYnJreW1tejc2IiwiZW1haWwiOiJhbXBhbmRyYW5hQGV4YW1wbGUuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3OTIwNzMzMTUsImV4cCI6MTc5MjE1OTcxNX0.N1Y5ZLycs7Df2TMmWthaWVealrgPI14AcoJd8mpRKHU";
-
 const initialPharmacy = {
     name: "Pharmacie Ambohipo",
     address: "3 Chemis Ambohipo",
@@ -22,6 +20,14 @@ const initialPharmacy = {
     phone: "+261 39 00 000 00",
     email: "contact@ambohipo.mg",
 };
+
+type Pharmacie = {
+    name: string,
+    email:string,
+    phone:string,
+    city:string,
+    address:string
+}
 
 const formatPrice = (price: number) =>
     new Intl.NumberFormat("fr-FR").format(price);
@@ -39,7 +45,7 @@ function getStatus(quantity: number) {
 
 export default function PharmacyDashboardPage() {
     const [medicines, setMedicines] = useState<Medicine[]>([]);
-    const [pharmacy, setPharmacy] = useState(initialPharmacy);
+    const [pharmacy, setPharmacy] = useState<Pharmacie>();
 
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("Tous les statuts");
@@ -64,6 +70,10 @@ export default function PharmacyDashboardPage() {
                 setStockError("");
 
                 const data = await getStockPharmacy();
+                const pharmacy = await getOnePharmacy()
+
+                console.log(pharmacy);
+            
 
                 if (!cancelled) {
                     // Cette version suppose que l'API renvoie directement un tableau.
@@ -74,6 +84,7 @@ export default function PharmacyDashboardPage() {
                     }
 
                     setMedicines(data);
+                    setPharmacy(pharmacy)
                 }
             } catch (error) {
                 if (!cancelled) {
@@ -190,20 +201,42 @@ export default function PharmacyDashboardPage() {
             setSaving(false);
         }
     }
-    function savePharmacy(event: React.FormEvent<HTMLFormElement>) {
+
+    async function savePharmacy(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
 
-        setPharmacy({
+        const values = {
             name: String(data.get("name")).trim(),
             address: String(data.get("address")).trim(),
             city: String(data.get("city")).trim(),
             phone: String(data.get("phone")).trim(),
-            email: String(data.get("email")).trim(),
-        });
+            // email: String(data.get("email")).trim(),
+        };
 
-        setEditingPharmacy(false);
-        setNotice("Informations modifiées.");
+
+        if (!values.name || !values.address || !values.city || !values.phone) {
+            setFormError("Tous les champs sont obligatoires.");
+            return;
+        }
+
+        setFormError("");
+        setEditingPharmacy(true);
+
+        try {
+            const saved = await updatePharmacie(values); 
+            setPharmacy(saved);
+            setEditingPharmacy(false);
+            setNotice("Informations modifiées.");
+            
+        } catch (error) {
+            setFormError(
+                error instanceof Error ? error.message : "Modification impossible."
+            );
+        } finally {
+            setEditingPharmacy(false);
+        }
+        
     }
 
     function deleteMedicine() {
@@ -274,22 +307,22 @@ export default function PharmacyDashboardPage() {
                                     <div className="flex items-center gap-4 border-b border-slate-100 pb-5">
                                         <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-2xl">▣</span>
                                         <div>
-                                            <h3 className="font-bold text-slate-950">{pharmacy.name}</h3>
-                                            <p className="text-sm text-slate-500">{pharmacy.city}</p>
-                                            <span className="mt-2 inline-block rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Profil actif (démo)</span>
+                                            <h3 className="font-bold text-slate-950">{pharmacy?.name ?? "chargement..."}</h3>
+                                            <p className="text-sm text-slate-500">{pharmacy?.city ??"chargement..."}</p>
+                                            <span className="mt-2 inline-block rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Profil actif</span>
                                         </div>
                                     </div>
                                     <div>
                                         <p className="text-sm font-semibold">⌖ &nbsp; Adresse</p>
-                                        <p className="ml-6 mt-1 text-sm text-slate-500">{pharmacy.address}, {pharmacy.city}</p>
+                                        <p className="ml-6 mt-1 text-sm text-slate-500">{pharmacy?.address}, {pharmacy?.city ?? 'chargement...' } "</p>
                                     </div>
                                     <div>
                                         <p className="text-sm font-semibold">♧ &nbsp; Téléphone</p>
-                                        <a href={`tel:${pharmacy.phone.replace(/[^\d+]/g, "")}`} className="ml-6 mt-1 block text-sm text-emerald-700 hover:underline">{pharmacy.phone}</a>
+                                        <a href={`tel:${pharmacy?.phone}`} className="ml-6 mt-1 block text-sm text-emerald-700 hover:underline">{pharmacy?.phone ??"chargement..."}</a>
                                     </div>
                                     <div>
                                         <p className="text-sm font-semibold">✉ &nbsp; E-mail</p>
-                                        <a href={`mailto:${pharmacy.email}`} className="ml-6 mt-1 block break-all text-sm text-slate-500 hover:text-emerald-700">{pharmacy.email}</a>
+                                        <a href={`mailto:${pharmacy?.email}`} className="ml-6 mt-1 block break-all text-sm text-slate-500 hover:text-emerald-700">{pharmacy?.email ??"chargement..."}</a>
                                     </div>
                                 </div>
 
@@ -467,11 +500,10 @@ export default function PharmacyDashboardPage() {
                         <h2 id="pharmacy-title" className="text-xl font-bold">Modifier ma pharmacie</h2>
                         <form onSubmit={savePharmacy} className="mt-5 space-y-4">
                             {[
-                                ["name", "Nom", pharmacy.name],
-                                ["address", "Adresse", pharmacy.address],
-                                ["city", "Ville", pharmacy.city],
-                                ["phone", "Téléphone", pharmacy.phone],
-                                ["email", "E-mail", pharmacy.email],
+                                ["name", "Nom", pharmacy?.name],
+                                ["address", "Adresse", pharmacy?.address],
+                                ["city", "Ville", pharmacy?.city],
+                                ["phone", "Téléphone", pharmacy?.phone],
                             ].map(([name, label, value]) => (
                                 <label key={name} className="block text-sm font-medium text-slate-700">
                                     {label}

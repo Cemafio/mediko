@@ -185,8 +185,7 @@ export default async function PharmacyPage({ params }: PageProps) {
         ? `${pharmacy.latitude},${pharmacy.longitude}`
         : `${pharmacy.name}, ${pharmacy.address}, ${pharmacy.city}`;
 
-    const mapsHref =
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
+    const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
 
     const today = getMadagascarTime().day;
 

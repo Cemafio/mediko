@@ -138,6 +138,27 @@ export async function getPharmacies() {
   return data;
 }
 
+export async function getOnePharmacy() {
+
+    const response = await fetch(`/api/pharmacy`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error("Erreur lors de la récupération des pharmacies");
+    }
+
+    const data = await response.json();
+
+    console.log("Pharmacy conected :", data);
+
+    return data;
+}
+
 export async function signin(email: string, password: string) {
     const response = await fetch("/api/auth/signin", {
         method: "POST",
@@ -157,7 +178,6 @@ export async function signin(email: string, password: string) {
 
     return data;
 }
-
 
 export async function createPharmacie(
   name: string,
@@ -202,3 +222,32 @@ export async function createPharmacie(
   };
 }
 
+type PharmacyUpdateValues = {
+  name?: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+  email?: string;
+};
+
+export async function updatePharmacie(
+  dataUpdate: PharmacyUpdateValues
+) {
+  const response = await fetch("/api/pharmacy", {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(dataUpdate),
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message ?? "Erreur lors de la modification de la pharmacie."
+    );
+  }
+
+  return data;
+} 

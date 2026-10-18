@@ -3,14 +3,21 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signin } from "@/lib/service";
+import { redirect } from "next/dist/server/api-utils";
+import { useRouter } from "next/navigation";
+
+
 
 export default function SignInPage() {
+  const router = useRouter()
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+
     e.preventDefault();
     setError("");
 
@@ -19,9 +26,11 @@ export default function SignInPage() {
       return;
     }
 
+    setLoading(true);
+
     try {
       const data = await signin(email.trim(), password);
-
+      router.push('/')
       // console.log("Utilisateur connecté :", data);
     } catch (error) {
       setError(
