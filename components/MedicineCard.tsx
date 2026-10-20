@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowUpRight, Pill, Tag } from "lucide-react";
 
 type Medicine = {
-    id: number;
+    id: string;
     name: string;
     category: string;
     dosage: string;

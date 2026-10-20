@@ -1,3 +1,4 @@
+import { Medicine } from "@/data/medicine";
 import { NextResponse } from "next/server";
 import { log } from "node:console";
 
@@ -11,24 +12,46 @@ type StockValues = {
   quantity: number;
 };
 
+export type PaginatedMedicines = {
+  data: Medicine[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasPreviousPage: boolean;
+    hasNextPage: boolean;
+  };
+};
+
 // Fetch medicines from the backend
-export async function getMedicines() {
-  const response = await fetch(`${API_URL}/medicine`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+
+export async function getMedicines(
+  page = 1,
+  limit = 12,
+  search = '',
+) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
   });
 
-  if (!response.ok) {
-    throw new Error("Erreur lors de la récupération des médicaments");
+  if (search.trim()) {
+    params.set('search', search.trim());
   }
 
-  const data = await response.json();
+  const response = await fetch(
+    `${process.env.API_URL}/medicine?${params.toString()}`,
+    {
+      cache: 'no-store',
+    },
+  );
 
-  console.log("Médicaments reçus du backend :", data);
+  if (!response.ok) {
+    throw new Error('Impossible de charger les médicaments');
+  }
 
-  return data;
+  return response.json();
 }
 
 export async function getStockPharmacy() {
@@ -119,24 +142,65 @@ export async function getOneMedicine(id: string) {
 }
 
 // Fetch pharmacies from the backend
-export async function getPharmacies() {
-  const response = await fetch(`${API_URL}/pharmacies`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+export async function getPharmacies(
+  page = 1,
+  limit = 6,
+  search = '',
+  city = '',
+) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
   });
 
-  if (!response.ok) {
-    throw new Error("Erreur lors de la récupération des pharmacies");
+  if (search.trim()) {
+    params.set('search', search.trim());
   }
 
-  const data = await response.json();
+  if (city.trim()) {
+    params.set('city', city.trim());
+  }
 
-  console.log("Pharmacies reçues du backend :", data);
+  const response = await fetch(
+    `${API_URL}/pharmacies?${params.toString()}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    },
+  );
 
-  return data;
+  if (!response.ok) {
+    throw new Error(
+      'Erreur lors de la récupération des pharmacies',
+    );
+  }
+
+  return response.json();
 }
+
+export async function getCity() {
+    const response = await fetch(
+    `${API_URL}/pharmacies/cities`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      'Erreur lors de la récupération des pharmacies',
+    );
+  }
+
+  return response.json();
+} 
 
 export async function getOnePharmacy() {
 
@@ -150,6 +214,27 @@ export async function getOnePharmacy() {
 
     if (!response.ok) {
       throw new Error("Erreur lors de la récupération des pharmacies");
+    }
+
+    const data = await response.json();
+
+    console.log("Pharmacy conected :", data);
+
+    return data;
+}
+
+export async function getOnePharmacyById(id:string) {
+
+    const response = await fetch(`${API_URL}/pharmacies/findById/${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erreur lors de la récupération de pharmacies, Id: ${id}`);
     }
 
     const data = await response.json();

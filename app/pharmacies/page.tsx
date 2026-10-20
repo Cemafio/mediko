@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PharmacyCard from "@/components/pharmacieCard";
-import { pharmacies } from "@/data/pharmacies";
 import { getOpenStatus } from "@/lib/openingHours";
+import { getCity, getPharmacies } from "@/lib/service";
 
 // Le statut Ouvert/Fermé dépend de l'heure : on évite le cache statique
 export const dynamic = "force-dynamic";
@@ -18,6 +18,7 @@ type PharmaciesPageProps = {
         search?: string;
         city?: string;
         open?: string;
+        page?: string
     }>;
 };
 
@@ -30,48 +31,63 @@ function normalize(value: string) {
         .trim();
 }
 
+function buildHref(
+  search: string | undefined,
+  page: number,
+  city?: string,
+  open?: boolean,
+) {
+  const params = new URLSearchParams();
+
+  if (search) params.set("search", search);
+  if (city) params.set("city", city);
+  if (open) params.set("open", "1");
+  if (page > 1) params.set("page", String(page));
+
+  const query = params.toString();
+
+  return query ? `/pharmacies?${query}` : "/pharmacies";
+}
+
+
 export default async function PharmaciesPage({
     searchParams,
 }: PharmaciesPageProps) {
-    const { search: rawSearch, city: rawCity, open } = await searchParams;
+    const { search: rawSearch, city: rawCity, page:rawPage ,open, } = await searchParams;
+    const parsedPage = Number(rawPage);
+
+    const requestedPage =
+        Number.isSafeInteger(parsedPage) && parsedPage > 0
+            ? parsedPage
+            : 1;
+
 
     const search = rawSearch?.trim() || undefined;
     const city = rawCity?.trim() || undefined;
     const onlyOpen = open === "1";
+    let result: Awaited<ReturnType<typeof getPharmacies>> | null = null;
+    let loadError = false;
 
+    try {
+        result = await getPharmacies(
+            requestedPage,
+            6,
+            search ?? '',
+            city ?? '',
+        );    
+    } catch {
+        loadError = true;
+    }
     // Pharmacies enrichies avec leur statut du moment
-    const all = (pharmacies as any[]).map((pharmacy) => ({
-        pharmacy,
-        status: getOpenStatus(pharmacy.openingHours),
-    }));
+    const all = result?.data ?? [];
 
-    const cities = Array.from(
-        new Set(
-            all
-                .map(({ pharmacy }) => String(pharmacy.city ?? "").trim())
-                .filter(Boolean)
-        )
-    ).sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }));
+    const meta = result?.meta;
+    const currentPage = meta?.page ?? requestedPage;
+    const totalPages = meta?.totalPages ?? 0;
+    const total = meta?.total ?? 0;
 
-    const query = search ? normalize(search) : "";
+    const cities = await getCity();
 
-    const filtered = all
-        .filter(({ pharmacy, status }) => {
-            if (city && normalize(String(pharmacy.city ?? "")) !== normalize(city)) {
-                return false;
-            }
-            if (onlyOpen && !status.isOpen) return false;
-            if (!query) return true;
-
-            return normalize(
-                `${pharmacy.name} ${pharmacy.address} ${pharmacy.city}`
-            ).includes(query);
-        })
-        .sort((a, b) =>
-            String(a.pharmacy.name).localeCompare(String(b.pharmacy.name), "fr", {
-                sensitivity: "base",
-            })
-        );
 
     // const openCount = all.filter(({ status }) => status.isOpen).length;
     const hasFilters = Boolean(search || city || onlyOpen);
@@ -127,7 +143,7 @@ export default async function PharmaciesPage({
                                 className="rounded-lg border bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
                             >
                                 <option value="">Toutes les villes</option>
-                                {cities.map((c) => (
+                                {cities.map((c:any) => (
                                     <option key={c} value={c}>
                                         {c}
                                     </option>
@@ -161,9 +177,9 @@ export default async function PharmaciesPage({
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="text-sm text-slate-600">
                         <strong className="text-slate-900">
-                            {filtered.length}
+                            {all.length}
                         </strong>{" "}
-                        pharmacie{filtered.length > 1 ? "s" : ""}
+                        pharmacie{all.length > 1 ? "s" : ""}
                         {search && (
                             <>
                                 {" "}
@@ -187,7 +203,7 @@ export default async function PharmaciesPage({
                 </div>
 
                 {/* Liste ou état vide */}
-                {filtered.length === 0 ? (
+                {all.length === 0 ? (
                     <div className="mt-8 rounded-2xl border border-dashed bg-white px-6 py-16 text-center">
                         <div
                             aria-hidden="true"
@@ -212,30 +228,55 @@ export default async function PharmaciesPage({
                     </div>
                 ) : (
                     <div className="mt-6 grid gap-4 md:grid-cols-2">
-                        {filtered.map(({ pharmacy, status }) => (
+                        {all.map((pharmacy:any) => (
                             <div key={pharmacy.id} className="relative">
                                 <PharmacyCard pharmacy={pharmacy} />
-
-                                {/* <span
-                                    className={`absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
-                                        status.isOpen
-                                            ? "bg-green-100 text-green-700"
-                                            : "bg-red-100 text-red-700"
-                                    }`}
-                                >
-                                    <span
-                                        className={`h-1.5 w-1.5 rounded-full ${
-                                            status.isOpen
-                                                ? "bg-green-600"
-                                                : "bg-red-600"
-                                        }`}
-                                    />
-                                    {status.isOpen ? "Ouvert" : "Fermé"}
-                                </span> */}
                             </div>
                         ))}
                     </div>
                 )}
+
+                {meta && totalPages > 1 && (
+                    <nav
+                        aria-label="Pagination"
+                        className="mt-10 flex items-center justify-between gap-4"
+                    >
+                        {meta.hasPreviousPage ? (
+                            <Link
+                                href={buildHref(search, currentPage - 1, city)}
+                                className="rounded-lg border bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-green-200 hover:text-green-700"
+                            >
+                                ← Précédent
+                            </Link>
+                        ) : (
+                            <span className="cursor-not-allowed rounded-lg border bg-slate-100 px-4 py-2 text-sm font-medium text-slate-400">
+                                ← Précédent
+                            </span>
+                        )}
+
+                        <span className="text-sm text-slate-500">
+                            Page{" "}
+                            <strong className="text-slate-900">
+                                {currentPage}
+                            </strong>{" "}
+                            sur {totalPages}
+                        </span>
+
+                        {meta.hasNextPage ? (
+                            <Link
+                                href={buildHref(search, currentPage + 1, city)}
+                                className="rounded-lg border bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-green-200 hover:text-green-700"
+                            >
+                                Suivant →
+                            </Link>
+                        ) : (
+                            <span className="cursor-not-allowed rounded-lg border bg-slate-100 px-4 py-2 text-sm font-medium text-slate-400">
+                                Suivant →
+                            </span>
+                        )}
+                    </nav>
+                )}
+
             </div>
         </main>
     );

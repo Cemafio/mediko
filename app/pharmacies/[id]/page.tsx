@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { pharmacies } from "@/data/pharmacies";
 import BackButton from "@/components/backbutton";
 import { log } from "console";
+import { getOnePharmacyById } from "@/lib/service";
 
 export const dynamic = "force-dynamic";
 
@@ -152,9 +153,7 @@ export async function generateMetadata({
     params,
 }: PageProps): Promise<Metadata> {
     const { id } = await params;
-    const pharmacy = (pharmacies as Pharmacy[]).find(
-        (item) => item.id === id
-    );
+    const pharmacy = await getOnePharmacyById(id);
 
     if (!pharmacy) {
         return { title: "Pharmacie introuvable | Mediko" };
@@ -169,9 +168,7 @@ export async function generateMetadata({
 export default async function PharmacyPage({ params }: PageProps) {
     const { id } = await params;
 
-    const pharmacy = (pharmacies as Pharmacy[]).find(
-        (item) => item.id === id
-    );
+    const pharmacy = await getOnePharmacyById(id);
 
     if (!pharmacy) notFound();
 
@@ -290,9 +287,9 @@ export default async function PharmacyPage({ params }: PageProps) {
                         <div className="mt-6 divide-y divide-slate-100">
                             {DAYS.map((day, index) => {
                                 const hours = pharmacy.openingHours
-                                    .filter((item) => item.dayOfWeek === index)
+                                    .filter((item:any) => item.dayOfWeek === index)
                                     .sort(
-                                        (a, b) =>
+                                        (a:any, b:any) =>
                                             toMinutes(a.opensAt) -
                                             toMinutes(b.opensAt)
                                     );
