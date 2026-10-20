@@ -30,6 +30,8 @@ export default function SignInPage() {
 
     try {
       const data = await signin(email.trim(), password);
+      window.location.reload()
+
       router.push('/')
       // console.log("Utilisateur connecté :", data);
     } catch (error) {

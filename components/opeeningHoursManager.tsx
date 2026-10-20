@@ -117,6 +117,8 @@ export default function OpeningHoursManager({
       }
 
       setMessage("Les horaires ont été enregistrés avec succès.");
+      window.location.reload()
+      
     } catch (err) {
       setError(
         err instanceof Error
