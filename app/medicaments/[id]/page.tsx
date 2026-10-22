@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import PharmacyCard from "@/components/pharmacieCard";
 import BackButton from "@/components/backbutton";
 import { getOneMedicine } from "@/lib/service";
+import PharmacyPriceCard from "@/components/pharmaPrice";
 
 type MedicinePageProps = {
     params: Promise<{
@@ -14,6 +15,8 @@ type MedicinePageProps = {
 
 type PharmacyLink = {
     pharmacyId: string | number;
+    price: string,
+    quantity: number
     pharmacy: any;
 };
 
@@ -42,16 +45,29 @@ export async function generateMetadata({
     };
 }
 
+
+
 export default async function MedicinePage({ params }: MedicinePageProps) {
     const { id } = await params;
     const medicine = await fetchMedicine(id);
-
+    
     // Vérification AVANT d'utiliser medicine (sinon medicine.pharmacy plante)
     if (!medicine) {
         notFound();
     }
 
     const availablePharmacies: PharmacyLink[] = medicine.pharmacy ?? [];
+    const sorted = [...availablePharmacies].sort((a: any, b: any) => {
+        if ((a.quantity > 0) !== (b.quantity > 0)) return a.quantity > 0 ? -1 : 1;
+        return a.price - b.price;
+    });
+
+    const cheapestId = sorted.find((item: any) => item.quantity > 0)?.pharmacyId;
+
+    sorted.map((item) => {
+
+        console.log(item.pharmacy);
+    });
 
     return (
         <main className="min-h-screen bg-slate-50 px-6 py-12">
@@ -132,10 +148,13 @@ export default async function MedicinePage({ params }: MedicinePageProps) {
                                 </div>
                             ) : (
                                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                                    {availablePharmacies.map((item) => (
-                                        <PharmacyCard
+                                    {sorted.map((item) => (
+                                        <PharmacyPriceCard
                                             key={item.pharmacyId}
                                             pharmacy={item.pharmacy}
+                                            price={Number(item.price)}
+                                            quantity={item.quantity}
+                                            isCheapest={item.pharmacyId === cheapestId}
                                         />
                                     ))}
                                 </div>
